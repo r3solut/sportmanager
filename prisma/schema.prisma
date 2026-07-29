@@ -1,0 +1,43 @@
+// Файл: backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Модель для хранения пользователей системы
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  // Перенесли индекс для createdAt вниз, как требует Prisma 5
+  @@index([createdAt])
+  @@map("users")
+}
+
+// Модель для хранения спортивных LIVE-событий и ИИ-коэффициентов
+model Match {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  homeTeam    String   @db.VarChar(100)
+  awayTeam    String   @db.VarChar(100)
+  homeScore   Int      @default(0)
+  awayScore   Int      @default(0)
+  status      String   @default("LIVE") @db.VarChar(20) // LIVE, FINISHED
+  winPredProb Decimal  @db.Decimal(5, 2)               // Прогноз ИИ на победу Home в %
+  oddHome     Decimal  @db.Decimal(5, 2)               // Коэффициент на П1
+  oddDraw     Decimal  @db.Decimal(5, 2)               // Коэффициент на Х
+  oddAway     Decimal  @db.Decimal(5, 2)               // Коэффициент на П2
+  minute      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Все составные индексы вынесены в конец модели
+  @@index([status])
+  @@index([createdAt])
+  @@map("matches")
+}
